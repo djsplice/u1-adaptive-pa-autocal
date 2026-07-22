@@ -1,6 +1,6 @@
 # U1 Adaptive PA AutoCal
 
-**Sensor-driven OrcaSlicer Adaptive Pressure Advance tables for the Snapmaker U1.**
+**Sensor-driven OrcaSlicer Adaptive Pressure Advance tables generator for the Snapmaker U1.**
 
 Uses the U1’s stock inductance flow sensor and `FLOW_MEASURE_K` (pure-E velocity steps + residual `area`) so you can build Adaptive PA rows **without** printing and scoring line tests. Klipper macros only — no firmware fork required.
 
