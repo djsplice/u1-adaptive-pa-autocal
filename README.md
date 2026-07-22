@@ -13,7 +13,9 @@ PA, flow_mm3_s, accel_mm_s2
 | Path | Purpose |
 |------|---------|
 | [`adaptive_pa_macro.cfg`](adaptive_pa_macro.cfg) | Klipper gcode macros (box-style 5-point suite + finish helpers) |
-| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | Full walkthrough, methodology, math, coil waveform analysis |
+| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | Install, quick start, presets, troubleshooting, command reference |
+| [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md) | Residual `area`, box design, confidence scoring, kinematics |
+| [`docs/COIL_DATA_CAPTURE.md`](docs/COIL_DATA_CAPTURE.md) | Optional coil frequency capture and waveform analysis |
 | [`scripts/coil_dump_client.py`](scripts/coil_dump_client.py) | Optional coil frequency capture / plot (Moonraker or UDS) |
 | [`docs/images/`](docs/images/) | Example scope captures for residual vs waveform |
 
@@ -35,7 +37,7 @@ APA_COIL_RUN_ALL EXTRUDER=0 TEMP=220
 4. For each test point, find the `area` sign flip and run `APA_FINISH_CELL` / `APA_FINISH_LAST` as described in the [user guide](docs/USER_GUIDE.md).
 5. Paste the resulting rows into OrcaSlicer → Filament → Adaptive pressure advance.
 
-Details, presets, time/filament cost, confidence scoring, and troubleshooting: **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**.
+Full walkthrough: **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**.
 
 ## Optional: coil waveform capture
 
@@ -52,7 +54,7 @@ python3 scripts/coil_dump_client.py \
   --name apa_center_t2
 ```
 
-Then run `APA_COIL_*` in Fluidd; press Enter when the point finishes. See [User Guide §6](docs/USER_GUIDE.md#6-optional-coil-frequency-capture--waveform-analysis).
+Then run `APA_COIL_*` in Fluidd; press Enter when the point finishes. See **[docs/COIL_DATA_CAPTURE.md](docs/COIL_DATA_CAPTURE.md)**.
 
 ## Requirements
 
