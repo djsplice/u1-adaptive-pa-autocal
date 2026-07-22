@@ -65,7 +65,7 @@ Then run `APA_COIL_*` in Fluidd; press Enter when the point finishes. See **[doc
 
 ## License
 
-This project’s macros, documentation, images, and client are licensed under the **Apache License 2.0** — see [LICENSE](LICENSE).
+This project’s macros, documentation, images, and client are licensed under the **GNU General Public License v3.0** — see [LICENSE](LICENSE).
 
 Klipper, Snapmaker firmware, Moonraker, and OrcaSlicer remain under their own licenses. This repository does not relicense those projects.
 
