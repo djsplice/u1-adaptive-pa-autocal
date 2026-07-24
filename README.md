@@ -1,5 +1,9 @@
 # U1 Adaptive PA AutoCal
 
+<p align="center">
+  <img src="docs/images/APA-Youtube_picture.jpg" alt="U1 Adaptive PA AutoCal — Snapmaker U1 coil-based Adaptive Pressure Advance" width="640">
+</p>
+
 **Sensor-driven OrcaSlicer Adaptive Pressure Advance tables generator for the Snapmaker U1.**
 
 Uses the U1’s stock inductance flow sensor and `FLOW_MEASURE_K` (pure-E velocity steps + residual `area`) so you can build Adaptive PA rows **without** printing and scoring line tests. Klipper macros only — no firmware fork required.
@@ -17,7 +21,7 @@ PA, flow_mm3_s, accel_mm_s2
 | [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md) | Residual `area`, box design, confidence scoring, kinematics |
 | [`docs/COIL_DATA_CAPTURE.md`](docs/COIL_DATA_CAPTURE.md) | Optional coil frequency capture and waveform analysis |
 | [`scripts/coil_dump_client.py`](scripts/coil_dump_client.py) | Optional coil frequency capture / plot (Moonraker or UDS) |
-| [`docs/images/`](docs/images/) | Example scope captures for residual vs waveform |
+| [`docs/images/`](docs/images/) | README/YouTube thumbnail + example coil scope captures |
 
 ## Quick install (printer)
 
