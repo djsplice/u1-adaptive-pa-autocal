@@ -1,4 +1,4 @@
-# U1 Adaptive PA AutoCal
+# U1 Adaptive Pressure Advance Auto Calibration
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=TzlhBpQkZEI">
@@ -13,6 +13,14 @@ Uses the U1’s stock inductance flow sensor and `FLOW_MEASURE_K` (pure-E veloci
 ```text
 PA, flow_mm3_s, accel_mm_s2
 ```
+
+## Docs & video
+
+| | |
+|--|--|
+| **Blog post** | [Snapmaker U1 Adaptive Pressure Advance auto-calibration](https://garagenotes.lmnt.co/Snapmaker-U1-Adaptive-Pressure-Advance-auto-calibration.html) |
+| **YouTube** | [Walkthrough](https://www.youtube.com/watch?v=TzlhBpQkZEI) (thumbnail above) |
+| **User guide** | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) |
 
 ## What’s in this repo
 
@@ -43,7 +51,7 @@ APA_COIL_RUN_ALL EXTRUDER=0 TEMP=220
 4. For each test point, find the `area` sign flip and run `APA_FINISH_CELL` / `APA_FINISH_LAST` as described in the [user guide](docs/USER_GUIDE.md).
 5. Paste the resulting rows into OrcaSlicer → Filament → Adaptive pressure advance.
 
-Full walkthrough: **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**.
+Full walkthrough: **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)** · narrative write-up: **[blog](https://garagenotes.lmnt.co/Snapmaker-U1-Adaptive-Pressure-Advance-auto-calibration.html)**.
 
 ## Optional: coil waveform capture
 
