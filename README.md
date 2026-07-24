@@ -1,7 +1,9 @@
 # U1 Adaptive PA AutoCal
 
 <p align="center">
-  <img src="docs/images/APA-Youtube_picture.jpg" alt="U1 Adaptive PA AutoCal — Snapmaker U1 coil-based Adaptive Pressure Advance" width="640">
+  <a href="https://www.youtube.com/watch?v=TzlhBpQkZEI">
+    <img src="docs/images/APA-Youtube_picture.jpg" alt="U1 Adaptive PA AutoCal — Snapmaker U1 coil-based Adaptive Pressure Advance (YouTube)" width="640">
+  </a>
 </p>
 
 **Sensor-driven OrcaSlicer Adaptive Pressure Advance tables generator for the Snapmaker U1.**
