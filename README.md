@@ -36,7 +36,7 @@ PA, flow_mm3_s, accel_mm_s2
 ## Quick install (printer)
 
 1. Copy `adaptive_pa_macro.cfg` onto the printer (e.g. next to `printer.cfg`, or into a config subdirectory).
-2. Include it and restart Klipper:
+2. Include it in your `printer.cfg` and restart Klipper:
 
 ```ini
 [include adaptive_pa_macro.cfg]
