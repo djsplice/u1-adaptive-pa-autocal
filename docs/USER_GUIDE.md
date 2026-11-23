@@ -40,7 +40,7 @@ Before running the calibration, ensure:
 * finds the sign flip, computes $K^*$ and the confidence score exactly like `APA_FINISH_CELL` (and also runs `APA_FINISH_CELL`, so the result shows up in the Fluidd/Mainsail console),
 * re-runs a point with the K range moved when every `area` has the same sign (up to `--max-retries`, default 2),
 * re-runs a point with a fine `0.001` step between the bracket ends when confidence is below 45 (`--refine-below`),
-* prints the OrcaSlicer rows and the median fallback PA, and saves everything to `apa_results/<timestamp>/`,
+* prints the OrcaSlicer rows and the median fallback PA, and saves everything to `apa_results/<timestamp>/` (`<timestamp>_<filament>/` with `--filament`),
 * turns the nozzle heater off when a tool is done (`FLOW_MEASURE_K` leaves it at 170 °C).
 
 With [uv](https://docs.astral.sh/uv/) there is nothing to install — replace `python3` with `uv run` in the commands below (`uv run scripts/apa_autocal.py ...`) and uv fetches Python and `websockets` on first use. Otherwise:
@@ -53,6 +53,9 @@ python3 scripts/apa_autocal.py --host PRINTER_IP --tools 0 --dry-run
 
 # Full suite on T0 at 220 °C
 python3 scripts/apa_autocal.py --host PRINTER_IP --tools 0 --temp 220
+
+# Same, tagged with the filament name so you can find the results later
+python3 scripts/apa_autocal.py --host PRINTER_IP --tools 0 --temp 220 --filament "Polymaker PLA Pro"
 
 # All tools, without the stress corner
 python3 scripts/apa_autocal.py --host PRINTER_IP --tools 0,1,2,3 --temp 220 --skip-stress
@@ -77,6 +80,7 @@ Rows graded *weak* or *unusable* (confidence below 45) are left out of the Orca 
 
 | Option | Use |
 |--------|-----|
+| `--filament "Polymaker PLA Pro"` | Name the filament. It is saved in `results.json`, in the `orca_T<n>.txt` header and in the folder name (`apa_results/<timestamp>_Polymaker_PLA_Pro/`). `--resume` keeps it |
 | `--points center,high_flow` | Run only some points (`--skip-stress` leaves out the stress corner) |
 | `--dry-run` | Check the printer and print the commands; no heating or motion |
 | `--resume apa_results/<timestamp>` | Continue an interrupted session; finished points are kept |

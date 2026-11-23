@@ -18,6 +18,9 @@ toward the zero crossing; when confidence is low it is re-run with a fine
   # Full suite on T0 (envelope comes from _APA_COIL_CFG on the printer)
   python scripts/apa_autocal.py --host 192.168.1.50 --tools 0 --temp 220
 
+  # Tag the session with the filament (saved in results and in the folder name)
+  python scripts/apa_autocal.py --host 192.168.1.50 --tools 0 --filament "Polymaker PLA Pro"
+
   # Several tools, skip the stress corner, only print the plan
   python scripts/apa_autocal.py --host 192.168.1.50 --tools 0,1,2,3 --skip-stress --dry-run
 
@@ -29,7 +32,8 @@ toward the zero crossing; when confidence is low it is re-run with a fine
 
 Requires: Python 3.9+, websockets 14+ (not needed for --parse-log).
 With uv, ``uv run scripts/apa_autocal.py ...`` installs both automatically.
-Outputs go to apa_results/<timestamp>/ (results.json, orca_T<n>.txt, console.log).
+Outputs go to apa_results/<timestamp>[_<filament>]/ (results.json, orca_T<n>.txt,
+console.log).
 """
 
 from __future__ import annotations
@@ -352,8 +356,18 @@ def build_points(cfg: dict, names: Optional[List[str]], skip_stress: bool) -> Li
 # Reporting
 # ---------------------------------------------------------------------------
 
-def format_tool_report(tool: int, temp, points: List[dict]) -> str:
-    lines = ["", "=== T%d  %s C ===" % (tool, temp),
+def filament_slug(name: str) -> str:
+    """Folder-safe form of a filament name: 'Polymaker PLA Pro' -> 'Polymaker_PLA_Pro'.
+
+    Matches the ``_`` in the timestamp part of the folder name; ``-`` becomes ``_`` too.
+    """
+    return re.sub(r"[^A-Za-z0-9.+]+", "_", name).strip("_.")[:60]
+
+
+def format_tool_report(tool: int, temp, points: List[dict],
+                       filament: Optional[str] = None) -> str:
+    title = "T%d  %s C" % (tool, temp) + ("  %s" % filament if filament else "")
+    lines = ["", "=== %s ===" % title,
              "%-11s %6s %6s %6s  %-6s %4s  %-9s %s"
              % ("point", "speed", "accel", "flow", "K*", "conf", "grade", "notes")]
     for p in points:
@@ -378,8 +392,13 @@ def format_tool_report(tool: int, temp, points: List[dict]) -> str:
     return "\n".join(lines)
 
 
-def write_orca_file(path: str, tool: int, points: List[dict]) -> None:
+def write_orca_file(path: str, tool: int, points: List[dict],
+                    filament: Optional[str] = None, temp=None) -> None:
     lines = ["# T%d Adaptive PA rows: PA, flow_mm3_s, accel_mm_s2" % tool]
+    if filament:
+        lines.append("# filament: %s" % filament)
+    if temp is not None:
+        lines.append("# nozzle temperature: %s C" % temp)
     fb = fallback_pa(points)
     if fb is not None:
         lines.append("# fallback static pressure advance: %.3f" % fb)
@@ -715,8 +734,10 @@ class Session:
 
         total = sum(1 for t in self.args.tool_list for p in tools[str(t)]["points"]
                     if p["name"] in wanted and p.get("status") != "ok")
-        print("APA autocal @ %s  tools=%s  temp=%s  points to run=%d (~%d min before retries)"
-              % (self.mr.host, ",".join(map(str, self.args.tool_list)), temp, total,
+        filament = self.state.get("filament")
+        print("APA autocal @ %s  %stools=%s  temp=%s  points to run=%d (~%d min before retries)"
+              % (self.mr.host, "filament=%s  " % filament if filament else "",
+                 ",".join(map(str, self.args.tool_list)), temp, total,
                  total * len(expected_ks(cfg["k_min"], cfg["k_max"], cfg["k_step"]))
                  * SECONDS_PER_K / 60))
         print("Output: %s" % self.out_dir)
@@ -744,11 +765,11 @@ class Session:
                 entry["fallback_pa"] = fallback_pa(entry["points"])
                 self.save()
                 write_orca_file(os.path.join(self.out_dir, "orca_T%d.txt" % tool),
-                                tool, entry["points"])
+                                tool, entry["points"], filament, temp)
                 await self.heaters_off([tool])
         if not self.args.dry_run:
             for tool in self.args.tool_list:
-                print(format_tool_report(tool, temp, tools[str(tool)]["points"]))
+                print(format_tool_report(tool, temp, tools[str(tool)]["points"], filament))
             print("\nSaved: %s" % self.out_dir)
 
     async def heaters_off(self, tools: List[int]) -> None:
@@ -767,7 +788,7 @@ class Session:
 # Entry points
 # ---------------------------------------------------------------------------
 
-def run_parse_log(path: str) -> None:
+def run_parse_log(path: str, filament: Optional[str] = None) -> None:
     with open(path, encoding="utf-8", errors="replace") as f:
         points = parse_console_log(f.read())
     if not points:
@@ -780,7 +801,7 @@ def run_parse_log(path: str) -> None:
             p["notes"].append("no XY banner - speed/flow unknown")
         by_tool.setdefault(p["tool"], []).append(p)
     for tool, pts in sorted(by_tool.items()):
-        print(format_tool_report(tool, "?", pts))
+        print(format_tool_report(tool, "?", pts, filament))
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -796,6 +817,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                     help="Comma-separated tool indexes (default: 0, or the resumed session's)")
     ap.add_argument("--temp", type=int, default=None,
                     help="Nozzle temperature (default: temp in _APA_COIL_CFG)")
+    ap.add_argument("--filament", default=None,
+                    help="Filament name, e.g. \"Polymaker PLA Pro\"; saved with the results "
+                    "and added to the session folder name")
     ap.add_argument("--points", default=None,
                     help="Subset of points, e.g. center,high_flow (default: all)")
     ap.add_argument("--skip-stress", action="store_true", help="Skip the stress corner")
@@ -817,7 +841,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if args.parse_log:
         try:
-            run_parse_log(args.parse_log)
+            run_parse_log(args.parse_log, args.filament)
         except ApaError as e:
             print(e, file=sys.stderr)
             return 1
@@ -838,6 +862,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         ap.error("--max-retries must be >= 0 and --refine-below 0..100")
     if args.temp is not None and args.temp <= 0:
         ap.error("--temp must be a positive temperature")
+    if args.filament is not None:
+        args.filament = " ".join(args.filament.split())
+        if not filament_slug(args.filament):
+            ap.error("--filament needs at least one letter or digit")
 
     state: dict = {}
     if args.resume:
@@ -850,10 +878,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.temp is not None and "temp" in state and args.temp != state["temp"]:
             ap.error("session was measured at %s C; start a new session for %s C"
                      % (state["temp"], args.temp))
+        if args.filament and state.get("filament") not in (None, args.filament):
+            ap.error("session was measured with filament %r; start a new session for %r"
+                     % (state["filament"], args.filament))
         args.host = args.host or state.get("host")
         state.pop("host", None)  # a new --host (printer got a new IP) replaces the saved one
     else:
         out_dir = os.path.join(args.out, time.strftime("%Y%m%d_%H%M%S"))
+        if args.filament:
+            out_dir += "_" + filament_slug(args.filament)
+    if args.filament:
+        state.setdefault("filament", args.filament)
     if not args.host:
         ap.error("--host is required (or use --parse-log)")
     if not args.tool_list:
