@@ -77,7 +77,7 @@ Optionally you can use [uv](https://docs.astral.sh/uv/) (installs Python and dep
 uv run scripts/apa_autocal.py --host PRINTER_IP --tools 0 --temp 220
 ```
 
-The script runs the 5-point suite, reads every `area` value from Moonraker, re-runs points whose sweep missed the zero crossing, and prints the paste-ready OrcaSlicer rows plus a fallback static PA. Results are saved to `apa_results/<timestamp>/`. Details: [user guide §2](docs/USER_GUIDE.md#2-automated-run-recommended).
+The script runs the 5-point suite, reads every `area` value from Moonraker, re-runs points whose sweep missed the zero crossing, and prints the paste-ready OrcaSlicer rows plus a fallback static PA. Results are saved to `apa_results/<timestamp>/`; add `--filament "Polymaker PLA Pro"` to tag them with the filament name. Details: [user guide §2](docs/USER_GUIDE.md#2-automated-run-recommended).
 
 ## Optional: coil waveform capture
 

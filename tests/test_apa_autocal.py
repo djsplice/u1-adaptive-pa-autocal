@@ -244,9 +244,11 @@ class HelperTests(TempDirMixin, unittest.TestCase):
     def test_get_text_missing_file_is_empty(self):
         mr = apa.Moonraker("printer")
         not_found = urllib.error.HTTPError("http://printer/x", 404, "Not Found", {}, None)
+        self.addCleanup(not_found.close)
         self.patch(apa.urllib.request, "urlopen", side_effect=not_found)
         self.assertEqual(mr._get_text("/x", 5), "")
         server_error = urllib.error.HTTPError("http://printer/x", 500, "Boom", {}, None)
+        self.addCleanup(server_error.close)
         self.patch(apa.urllib.request, "urlopen", side_effect=server_error)
         with self.assertRaises(urllib.error.HTTPError):
             mr._get_text("/x", 5)
@@ -653,6 +655,47 @@ class EndToEndTests(TempDirMixin, unittest.TestCase):
         self.assertEqual(p["status"], "error")
         self.assertIn("abort calibration: heating timeout", p["notes"])
 
+    def test_filament_name_is_saved(self):
+        m = self.start_mock()
+        d, res, stdout = self.run_tool(m, "--points", "center", "--filament", " Polymaker  PLA/Pro ")
+        self.assertTrue(os.path.basename(d).endswith("_Polymaker_PLA_Pro"))
+        self.assertEqual(res["filament"], "Polymaker PLA/Pro")
+        self.assertIn("filament=Polymaker PLA/Pro", stdout)
+        self.assertIn("=== T0  220 C  Polymaker PLA/Pro ===", stdout)
+        with open(os.path.join(d, "orca_T0.txt"), encoding="utf-8") as f:
+            orca = f.read()
+        self.assertIn("# filament: Polymaker PLA/Pro\n# nozzle temperature: 220 C", orca)
+
+        m.commands.clear()  # resume keeps the saved name without passing it again
+        rc, stdout, _ = self.main("--resume", d, "--points", "center,low_anchor")
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.load(d)["filament"], "Polymaker PLA/Pro")
+        self.assertIn("Polymaker PLA/Pro ===", stdout)
+
+    def test_no_filament_name(self):
+        m = self.start_mock()
+        d, res, stdout = self.run_tool(m, "--points", "center")
+        self.assertRegex(os.path.basename(d), r"^\d{8}_\d{6}$")
+        self.assertNotIn("filament", res)
+        self.assertNotIn("filament=", stdout)
+        self.assertIn("=== T0  220 C ===", stdout)
+        with open(os.path.join(d, "orca_T0.txt"), encoding="utf-8") as f:
+            orca = f.read()
+        self.assertNotIn("# filament:", orca)
+        self.assertIn("# nozzle temperature: 220 C", orca)
+
+    def test_filament_name_added_on_resume(self):
+        m = self.start_mock()
+        d, _, _ = self.run_tool(m, "--points", "center")
+        rc, stdout, _ = self.main("--resume", d, "--points", "center,low_anchor",
+                                  "--filament", "PETG")
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.load(d)["filament"], "PETG")
+        self.assertIn("=== T0  220 C  PETG ===", stdout)
+        with open(os.path.join(d, "orca_T0.txt"), encoding="utf-8") as f:
+            self.assertIn("# filament: PETG", f.read())
+        self.assertRegex(os.path.basename(d), r"^\d{8}_\d{6}$")  # folder is not renamed
+
     # -- resume -------------------------------------------------------------
     def test_resume_skips_finished_points(self):
         m = self.start_mock()
@@ -800,6 +843,18 @@ class ArgumentTests(TempDirMixin, unittest.TestCase):
     def test_resume_temperature_change(self):
         d = self.write_session({"host": "x", "temp": 220, "tools": {}})
         self.assert_usage_error(["--resume", d, "--temp", "230"], "measured at 220 C")
+
+    def test_resume_filament_change(self):
+        d = self.write_session({"host": "x", "temp": 220, "filament": "PLA", "tools": {}})
+        self.assert_usage_error(["--resume", d, "--filament", "PETG"],
+                                "measured with filament 'PLA'")
+
+    def test_filament_without_letters(self):
+        self.assert_usage_error(["--host", "x", "--filament", " / "], "--filament needs")
+
+    def test_filament_slug(self):
+        self.assertEqual(apa.filament_slug("eSUN PLA+ (black)"), "eSUN_PLA+_black")
+        self.assertEqual(apa.filament_slug("Bambu PETG-HF 1.75"), "Bambu_PETG_HF_1.75")
 
     def test_non_positive_temperature(self):
         self.assert_usage_error(["--host", "x", "--temp", "0"], "--temp must be")
